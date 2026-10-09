@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "entry": "preview/index.html",
+  "scenes": 18,
+  "pictureBoards": 108,
+  "pronunciations": 4412,
+  "resourceCounts": {
+    "audio": 4412,
+    "content": 2,
+    "layout": 1,
+    "logo": 1,
+    "manifest": 1,
+    "pictures": 108,
+    "preview": 3
+  },
+  "fileCount": 4531,
+  "totalBytes": 19132622
+}
