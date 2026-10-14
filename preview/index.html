@@ -2,40 +2,27 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#244b40">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f5ef">
   <title>墨盒英语 · 把英语装进生活</title>
   <link rel="icon" type="image/png" href="../assets/brand/mohe-logo-128.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=mobile-3">
   <script src="../miniprogram/utils/board-layout.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=mobile-3" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到学习内容</a>
   <div class="app-shell" id="shell">
-    <aside class="sidebar" aria-label="主要导航">
-      <a class="brand" href="#home" aria-label="墨盒英语首页">
-        <img class="brand-mark" src="../assets/brand/mohe-logo-128.png" width="45" height="45" alt="墨盒小熊">
-        <span class="brand-copy"><strong>墨盒英语</strong><small>MOHE ENGLISH</small></span>
+    <header class="topbar">
+      <a class="mobile-brand" href="#home" aria-label="墨盒英语首页">
+        <img class="brand-mark" src="../assets/brand/mohe-logo-128.png" width="44" height="44" alt="墨盒小熊">
+        <span><strong>墨盒英语</strong><small id="topbar-title">把英语，装进生活</small></span>
       </a>
-      <p class="sidebar-caption">在生活里，学会英语</p>
-      <nav class="nav-list" id="desktop-nav"></nav>
-      <div class="sidebar-bottom">
-        <div class="ink-note"><span class="note-line"></span><p>每一件小事<br>都是英语的开始。</p><small>ONE DAY, ONE SCENE.</small></div>
-        <button class="sidebar-toggle" id="nav-toggle" aria-label="收起侧栏" aria-expanded="true"></button>
-      </div>
-    </aside>
-    <div class="main-panel">
-      <header class="topbar">
-        <a class="mobile-brand" href="#home" aria-label="墨盒英语首页"><img class="brand-mark" src="../assets/brand/mohe-logo-128.png" width="40" height="40" alt="墨盒小熊"><strong>墨盒英语</strong></a>
-        <p class="topbar-title" id="topbar-title">把英语，装进生活</p>
-        <div class="topbar-actions"><span class="local-tag"></span><button id="speed" class="speed-button" aria-pressed="false">1.0× <span>正常语速</span></button></div>
-      </header>
-      <main id="main" tabindex="-1"><div class="loading-state"><span class="loader"></span><p>正在打开生活词汇…</p></div></main>
-      <footer class="desktop-footer"><span>MOHE ENGLISH</span><span>生活里的英语，慢慢学，常常用。</span></footer>
-    </div>
+      <button id="speed" class="speed-button" aria-pressed="false">1.0×</button>
+    </header>
+    <main id="main" tabindex="-1"><div class="loading-state"><span class="loader"></span><p>正在打开生活词汇…</p></div></main>
+    <nav class="bottom-nav" aria-label="主要导航" id="mobile-nav"></nav>
   </div>
-  <nav class="bottom-nav" aria-label="主要导航" id="mobile-nav"></nav>
   <div class="player" id="player" hidden><span class="player-indicator"></span><div><small id="player-state">正在播放</small><strong id="player-text"></strong></div><button id="stop-audio" aria-label="停止播放"></button></div>
   <div class="toast" role="status" aria-live="polite" id="toast" hidden></div>
   <noscript>请启用 JavaScript 以使用场景学习与点读。</noscript>

@@ -33,7 +33,6 @@
     heard: Array.isArray(stored.heard) ? stored.heard : [],
     recent: Array.isArray(stored.recent) ? stored.recent : [],
     speed: stored.speed === 0.8 ? 0.8 : 1,
-    collapsed: Boolean(stored.collapsed),
     theme: 'all', query: '', lessonTab: 'words', favoriteType: 'all', playing: '', boardIndex: 0, hotspotsVisible: true, boardZoom: 1, boardFit: 'width', focusedLabel: '', readerPanel: 'picture', lessonPage: 0, lessonQuery: '',
   };
   let catalog = { themes: [], scenes: [] };
@@ -49,7 +48,7 @@
 
   function persist() {
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ favorites: state.favorites, favoriteContexts: state.favoriteContexts, heard: state.heard, recent: state.recent, speed: state.speed, collapsed: state.collapsed }));
+      localStorage.setItem(storageKey, JSON.stringify({ favorites: state.favorites, favoriteContexts: state.favoriteContexts, heard: state.heard, recent: state.recent, speed: state.speed }));
     } catch (_) { notify('此浏览器无法保存学习记录，当前仍可继续学习。'); }
   }
 
@@ -97,13 +96,7 @@
     const selected = route.startsWith('scene/') ? 'scenes' : route;
     const links = [{ id: 'home', label: '学习', icon: 'home' }, { id: 'scenes', label: '场景', icon: 'scenes' }, { id: 'favorites', label: '生词本', icon: 'bookmark' }];
     const html = links.map((link) => `<a class="nav-link ${selected === link.id ? 'active' : ''}" href="#${link.id}" ${selected === link.id ? 'aria-current="page"' : ''}>${icon(link.icon)}<span>${link.label}</span>${link.id === 'favorites' && favoriteItems().length ? `<span class="nav-count">${favoriteItems().length}</span>` : ''}</a>`).join('');
-    $('#desktop-nav').innerHTML = html;
     $('#mobile-nav').innerHTML = html;
-    $('#shell').classList.toggle('nav-collapsed', state.collapsed);
-    $('#nav-toggle').innerHTML = icon('collapse');
-    $('#nav-toggle').setAttribute('aria-expanded', String(!state.collapsed));
-    $('#nav-toggle').setAttribute('aria-label', state.collapsed ? '展开侧栏' : '收起侧栏');
-    $('.local-tag').textContent = '本地记录';
     updateSpeed();
   }
 
@@ -118,8 +111,8 @@
     const heard = heardWords(scene);
     const count = scene.words.length;
     return `<a class="scene-card" href="#scene/${escape(scene.id)}" aria-label="学习${escape(scene.title)}，${count}个词汇">
-      <div class="scene-card-image">${illustration(scene)}<span class="scene-number">SCENE ${String(catalog.scenes.indexOf(scene) + 1).padStart(2, '0')}</span></div>
-      <div class="scene-card-body"><p class="en-title">${escape(scene.en)}</p><h3>${escape(scene.title)}</h3><div class="scene-card-meta"><span>${count} 词汇 · ${scene.sentences.length} 表达</span>${icon('arrow')}</div>${heard ? `<div class="scene-card-progress" aria-label="已点读 ${heard} / ${count} 个词汇"><span style="width:${count ? Math.min(100, (heard / count) * 100) : 0}%"></span></div>` : ''}</div>
+      <div class="scene-card-image">${illustration(scene)}</div>
+      <div class="scene-card-body"><h3>${escape(scene.title)}</h3><p class="en-title">${escape(scene.en)}</p><div class="scene-card-meta"><span>${count} 词汇 · ${scene.sentences.length} 表达</span>${heard ? `<span class="heard-count">已听 ${heard}</span>` : ''}</div></div>${icon('chevron')}
     </a>`;
   }
 
@@ -127,23 +120,23 @@
     const first = catalog.scenes[0];
     const recent = state.recent.map((id) => catalog.scenes.find((scene) => scene.id === id)).filter(Boolean);
     const continueScene = recent[0] || first;
-    const totalWords = catalog.scenes.reduce((total, scene) => total + scene.words.length, 0);
     const heardCount = allItems.filter((item) => item.type === 'word' && state.heard.includes(item.id)).length;
-    return `<div class="page-heading"><div><p class="eyebrow">ENGLISH IN EVERYDAY LIFE</p><h1>让英语，走进每一天</h1><p>从熟悉的场景开始，听见生活里的英语。</p></div><img class="home-brand-avatar" src="../assets/brand/mohe-logo-128.png" width="56" height="56" alt="墨盒小熊"></div>
-      <section class="hero" aria-label="开始场景学习"><div class="hero-copy"><p class="eyebrow">A LITTLE ENGLISH, EVERY DAY.</p><h2>看见生活，<br>说出英语。</h2><p>一幅场景，一组词汇。<br>听一听，生活里的英语。</p><a class="primary-button" href="#scene/${escape(continueScene.id)}">${recent.length ? '继续学习' : '开始第一课'}${icon('arrow')}</a></div><div class="hero-art">${illustration(first, { eager: true })}</div></section>
-      <div class="stats-strip" aria-label="内容与学习记录"><div class="stat"><strong>${catalog.scenes.length}</strong><span>生活场景<span class="stat-unit">EVERYDAY SCENES</span></span></div><div class="stat"><strong>${totalWords}</strong><span>实用词汇<span class="stat-unit">WORDS TO LEARN</span></span></div><div class="stat"><strong>${heardCount}</strong><span>已点读词汇<span class="stat-unit">YOUR EXPLORATION</span></span></div></div>
-      ${recent.length ? `<a class="recent-card" href="#scene/${escape(continueScene.id)}">${illustration(continueScene)}<div><strong>继续 · ${escape(continueScene.title)}</strong><small>已点读 ${heardWords(continueScene)} / ${continueScene.words.length} 个词汇</small></div>${icon('arrow')}</a>` : ''}
-      <div class="section-heading"><div><h2>从一个生活场景开始</h2><small>醒来、出门、工作，一天里的英语都在这里。</small></div><a href="#scenes" class="text-link">全部场景 ${icon('chevron')}</a></div>
-      <div class="scene-grid">${catalog.scenes.slice(0, 6).map(sceneCard).join('')}</div>
-      <p class="local-note">${icon('audio').replace('<svg ', '<svg style="display:inline-block;width:13px;height:13px;vertical-align:-2px;margin-right:5px" ')}每个单词和句子都可以点读，点击星标即可加入生词本。</p>`;
+    const themeIcons = ['home', 'arrow', 'book', 'scenes', 'dialogue', 'bookmark'];
+    const themeNames = ['早晨', '出门', '工作学习', '家务', '办事休闲', '夜晚'];
+    return `<div class="page-heading home-heading"><h1>今天，学一点生活英语</h1><p>看见熟悉的事物，听见新的表达。</p></div>
+      <section class="learning-card" aria-label="开始场景学习"><div class="learning-card-copy"><span class="learning-tag">${recent.length ? '接着上次学' : '从生活开始'}</span><h2>${escape(continueScene.title)}</h2><p>${escape(continueScene.en)}</p><small>${sceneBoards(continueScene).length} 张点读图 · ${continueScene.words.length} 个词汇</small><a class="primary-button" href="#scene/${escape(continueScene.id)}">${recent.length ? '继续学习' : '开始学习'}${icon('arrow')}</a></div><img class="learning-bear" src="../assets/brand/mohe-logo-128.png" width="118" height="118" alt="墨盒小熊"></section>
+      <div class="stats-strip" aria-label="内容与学习记录"><div class="stat"><strong>${catalog.scenes.length}</strong><span>生活场景</span></div><div class="stat"><strong>${heardCount}</strong><span>已听词汇</span></div><div class="stat"><strong>${favoriteItems().length}</strong><span>收藏词句</span></div></div>
+      <div class="section-heading"><h2>按主题学</h2><span>一天里的英语</span></div><div class="theme-grid">${catalog.themes.map((theme, index) => `<button class="theme-entry theme-entry-${index}" data-open-theme="${escape(theme.id)}" aria-label="浏览${escape(theme.name)}主题">${icon(themeIcons[index])}<span>${escape(themeNames[index] || theme.name)}</span></button>`).join('')}</div>
+      ${recent.length ? `<div class="section-heading"><h2>最近学习</h2><a href="#scenes" class="text-link">查看全部${icon('chevron')}</a></div><a class="recent-card" href="#scene/${escape(continueScene.id)}">${illustration(continueScene)}<div><strong>${escape(continueScene.title)}</strong><small>已听 ${heardWords(continueScene)} / ${continueScene.words.length} 个词汇</small></div>${icon('chevron')}</a>` : ''}
+      <div class="section-heading"><h2>推荐场景</h2><a href="#scenes" class="text-link">全部场景${icon('chevron')}</a></div><div class="scene-grid">${catalog.scenes.slice(0, 3).map(sceneCard).join('')}</div><p class="local-note">点击英文听读音，点击星标存入生词本。</p>`;
   }
 
   function searchBox() {
-    return `<label class="sr-only" for="search">搜索中文、英文或生活场景</label><div class="search-box">${icon('search')}<input id="search" type="search" placeholder="搜索中文、英文或生活场景" autocomplete="off" value="${escape(state.query)}"><button class="search-clear" data-action="clear-search" aria-label="清空搜索" ${state.query ? '' : 'hidden'}>${icon('close')}</button></div>`;
+    return `<label class="sr-only" for="search">搜索中文、英文或生活场景</label><div class="search-box">${icon('search')}<input id="search" type="search" placeholder="搜索单词、中文或场景" autocomplete="off" value="${escape(state.query)}"><button class="search-clear" data-action="clear-search" aria-label="清空搜索" ${state.query ? '' : 'hidden'}>${icon('close')}</button></div>`;
   }
 
   function sceneDirectory() {
-    return `<div class="page-heading"><div><p class="eyebrow">YOUR EVERYDAY DICTIONARY</p><h1>一天的生活，一天的英语</h1><p>${catalog.themes.length} 个主题 · ${catalog.scenes.length} 个场景，挑一个熟悉的开始。</p></div></div>${searchBox()}<div class="theme-chips" aria-label="筛选主题"><button class="chip ${state.theme === 'all' ? 'active' : ''}" data-theme="all" aria-pressed="${state.theme === 'all'}">全部</button>${catalog.themes.map((theme) => `<button class="chip ${state.theme === theme.id ? 'active' : ''}" data-theme="${escape(theme.id)}" aria-pressed="${state.theme === theme.id}">${escape(theme.name)}</button>`).join('')}</div><div id="directory-results">${directoryResults()}</div>`;
+    return `<div class="page-heading"><h1>生活场景</h1><p>${catalog.themes.length} 个主题 · ${catalog.scenes.length} 个场景，选一个开始。</p></div>${searchBox()}<div class="theme-chips" aria-label="筛选主题"><button class="chip ${state.theme === 'all' ? 'active' : ''}" data-theme="all" aria-pressed="${state.theme === 'all'}">全部</button>${catalog.themes.map((theme) => `<button class="chip ${state.theme === theme.id ? 'active' : ''}" data-theme="${escape(theme.id)}" aria-pressed="${state.theme === theme.id}">${escape(theme.name)}</button>`).join('')}</div><div id="directory-results">${directoryResults()}</div>`;
   }
 
   function emptyState(title, description, linkLabel = '浏览生活场景', href = '#scenes', emptyIcon = 'search') {
@@ -303,7 +296,7 @@
   }
 
   function lessonPage(scene) {
-    return `<div class="reader-heading"><a class="reader-back" href="#scenes" aria-label="返回生活场景">${icon('back')}</a><div><h1>${escape(scene.title)}</h1><p>${escape(scene.en)}</p></div><button class="reader-stop" data-action="stop-reading" aria-label="停止朗读">${icon('stop')}</button></div>
+    return `<div class="reader-heading"><a class="reader-back" href="#scenes" aria-label="返回生活场景">${icon('back')}</a><div><h1>${escape(scene.title)}</h1><p>${escape(scene.en)}</p></div><button id="reader-speed" class="speed-button" aria-pressed="false">1.0×</button><button class="reader-stop" data-action="stop-reading" aria-label="停止朗读">${icon('stop')}</button></div>
       <div class="reader-modes" role="tablist" aria-label="切换学习方式"><button id="picture-mode" data-reader-panel="picture" role="tab" aria-selected="${state.readerPanel === 'picture'}" aria-controls="scene-art" class="${state.readerPanel === 'picture' ? 'active' : ''}">${icon('scenes')}看图点读</button><button id="practice-mode" data-reader-panel="practice" role="tab" aria-selected="${state.readerPanel === 'practice'}" aria-controls="practice-panel" class="${state.readerPanel === 'practice' ? 'active' : ''}">${icon('book')}词句练习</button></div>
       <div class="reader-workspace"><section id="scene-art" class="reader-panel" role="tabpanel" aria-labelledby="picture-mode" ${state.readerPanel === 'picture' ? '' : 'hidden'}>${boardArt(scene)}</section><section id="practice-panel" class="reader-panel" role="tabpanel" aria-labelledby="practice-mode" ${state.readerPanel === 'practice' ? '' : 'hidden'}>${practicePanel(scene)}</section></div>`;
   }
@@ -373,7 +366,7 @@
   function favoritesPage() {
     const favorites = favoriteItems();
     const filtered = favorites.filter((item) => state.favoriteType === 'all' || item.type === state.favoriteType);
-    return `<div class="page-heading"><div><p class="eyebrow">KEEP THE WORDS YOU LOVE</p><h1>我的生词本</h1><p>把想记住的英语收藏起来，随时回来听一听。</p></div></div><div class="bookmark-head">${icon('bookmark')}<div><strong>${favorites.length} 条收藏，慢慢变熟悉</strong><p>来自你亲手收藏的词汇和表达</p></div></div>${favorites.length ? `<div class="favorite-filters" aria-label="筛选收藏"><button class="chip ${state.favoriteType === 'all' ? 'active' : ''}" data-favorite-type="all" aria-pressed="${state.favoriteType === 'all'}">全部</button><button class="chip ${state.favoriteType === 'word' ? 'active' : ''}" data-favorite-type="word" aria-pressed="${state.favoriteType === 'word'}">词汇</button><button class="chip ${state.favoriteType === 'sentence' ? 'active' : ''}" data-favorite-type="sentence" aria-pressed="${state.favoriteType === 'sentence'}">表达</button></div>${filtered.length ? `<p class="favorites-count">${filtered.length} 条${state.favoriteType === 'word' ? '词汇' : state.favoriteType === 'sentence' ? '表达' : '学习内容'}</p><div class="${state.favoriteType === 'word' ? 'word-list' : 'sentences-list'}">${filtered.map((item) => { const scene = catalog.scenes.find((candidate) => candidate.id === item.sceneId); return item.type === 'word' ? wordRow(item, scene?.title || '') : sentenceCard(item, scene?.title || ''); }).join('')}</div>` : emptyState('这里还没有收藏', '在场景学习页点击星标，把想记住的词汇或表达放进来。', '去选一个生活场景', '#scenes', 'bookmark')}` : emptyState('让第一个单词住进来', '在场景学习页点击星标，把想记住的词汇或表达放进来。', '去选一个生活场景', '#scenes', 'bookmark')}<p class="local-note">收藏保存在当前浏览器中，无需登录。清除浏览器数据后，本地记录也会被清除。</p>`;
+    return `<div class="page-heading"><h1>我的生词本</h1><p>收藏想记住的，回来再听一遍。</p></div><div class="bookmark-head">${icon('bookmark')}<div><strong>${favorites.length} 条收藏</strong><p>积累一点，熟悉一点</p></div></div>${favorites.length ? `<div class="favorite-filters" aria-label="筛选收藏"><button class="chip ${state.favoriteType === 'all' ? 'active' : ''}" data-favorite-type="all" aria-pressed="${state.favoriteType === 'all'}">全部</button><button class="chip ${state.favoriteType === 'word' ? 'active' : ''}" data-favorite-type="word" aria-pressed="${state.favoriteType === 'word'}">词汇</button><button class="chip ${state.favoriteType === 'sentence' ? 'active' : ''}" data-favorite-type="sentence" aria-pressed="${state.favoriteType === 'sentence'}">表达</button></div>${filtered.length ? `<p class="favorites-count">${filtered.length} 条${state.favoriteType === 'word' ? '词汇' : state.favoriteType === 'sentence' ? '表达' : '学习内容'}</p><div class="${state.favoriteType === 'word' ? 'word-list' : 'sentences-list'}">${filtered.map((item) => { const scene = catalog.scenes.find((candidate) => candidate.id === item.sceneId); return item.type === 'word' ? wordRow(item, scene?.title || '') : sentenceCard(item, scene?.title || ''); }).join('')}</div>` : emptyState('这里还没有收藏', '在场景学习页点击星标，把想记住的词汇或表达放进来。', '去选一个生活场景', '#scenes', 'bookmark')}` : emptyState('让第一个单词住进来', '在场景学习页点击星标，把想记住的词汇或表达放进来。', '去选一个生活场景', '#scenes', 'bookmark')}<p class="local-note">收藏保存在当前浏览器中，无需登录。清除浏览器数据后，本地记录也会被清除。</p>`;
   }
 
   function routePage({ focus = false } = {}) {
@@ -428,7 +421,8 @@
     navigation();
     watchImages();
     observeHotspots();
-    if (focus) { $('#main').focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: 'instant' }); }
+    if (route === 'scenes') requestAnimationFrame(() => { const selected = $('.theme-chips .chip.active'); if (selected) selected.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' }); });
+    if (focus) { $('#main').scrollTop = 0; $('#main').focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: 'instant' }); }
     if (focusId && state.readerPanel === 'practice') requestAnimationFrame(() => {
       const target = document.getElementById(`entry-${focusId}`);
       if (target) { target.classList.add('search-target'); target.scrollIntoView({ block: 'center', behavior: 'instant' }); }
@@ -440,9 +434,13 @@
   }
 
   function updateSpeed() {
-    $('#speed').innerHTML = `${state.speed.toFixed(1)}× <span>${state.speed === 1 ? '正常语速' : '慢速跟读'}</span>`;
-    $('#speed').setAttribute('aria-pressed', String(state.speed === 0.8));
-    $('#speed').setAttribute('aria-label', state.speed === 1 ? '切换到零点八倍慢速' : '切换到正常语速');
+    ['#speed', '#reader-speed'].forEach((selector) => {
+      const button = $(selector);
+      if (!button) return;
+      button.textContent = `${state.speed.toFixed(1)}×`;
+      button.setAttribute('aria-pressed', String(state.speed === 0.8));
+      button.setAttribute('aria-label', state.speed === 1 ? '切换到零点八倍慢速' : '切换到正常语速');
+    });
   }
 
   function stopAudio() {
@@ -496,11 +494,12 @@
       button.setAttribute('aria-label', `${saved ? '收藏' : '取消收藏'} ${item?.en || ''}`);
     });
     navigation();
-    if (location.hash === '#favorites') { $('#main').innerHTML = favoritesPage(); watchImages(); }
+    if (location.hash === '#favorites') { const main = $('#main'); const top = main.scrollTop; main.innerHTML = favoritesPage(); main.scrollTop = top; watchImages(); }
     notify(saved ? '已从生词本移除' : '已加入生词本');
   }
 
   document.addEventListener('click', (event) => {
+    if (event.target.closest('.skip-link')) { event.preventDefault(); $('#main').focus({ preventScroll: true }); return; }
     const favorite = event.target.closest('[data-favorite]');
     if (favorite) { updateFavorite(favorite.dataset.favorite); return; }
     const locate = event.target.closest('[data-locate]');
@@ -509,6 +508,8 @@
     if (pictureLabel) { selectBoardLabel(pictureLabel.dataset.item); playText(pictureLabel.dataset.en, pictureLabel.dataset.item); return; }
     const audioButton = event.target.closest('[data-en]');
     if (audioButton) { playText(audioButton.dataset.en, audioButton.dataset.item); return; }
+    const themeEntry = event.target.closest('[data-open-theme]');
+    if (themeEntry) { state.theme = themeEntry.dataset.openTheme; state.query = ''; if (location.hash === '#scenes') routePage({ focus: true }); else location.hash = '#scenes'; return; }
     const theme = event.target.closest('[data-theme]');
     if (theme) { state.theme = theme.dataset.theme; document.querySelectorAll('[data-theme]').forEach((button) => { const selected = button.dataset.theme === state.theme; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }); $('#directory-results').innerHTML = directoryResults(); watchImages(); return; }
     const readerMode = event.target.closest('[data-reader-panel]');
@@ -546,8 +547,7 @@
     const clear = event.target.closest('[data-action="clear-search"]');
     if (clear) { state.query = ''; $('#search').value = ''; clear.hidden = true; $('#directory-results').innerHTML = directoryResults(); watchImages(); $('#search').focus(); return; }
     if (event.target.closest('#stop-audio, [data-action="stop-reading"]')) { stopAudio(); return; }
-    if (event.target.closest('#speed')) { state.speed = state.speed === 1 ? 0.8 : 1; if (activeAudio) activeAudio.playbackRate = state.speed; persist(); updateSpeed(); if (activeAudio && !activeAudio.paused) $('#player-state').textContent = state.speed === 0.8 ? '慢速播放 · 0.8×' : '正在播放 · 1.0×'; notify(state.speed === 0.8 ? '已切换慢速跟读 · 0.8×' : '已切换正常语速 · 1.0×'); return; }
-    if (event.target.closest('#nav-toggle')) { state.collapsed = !state.collapsed; persist(); navigation(); return; }
+    if (event.target.closest('#speed, #reader-speed')) { state.speed = state.speed === 1 ? 0.8 : 1; if (activeAudio) activeAudio.playbackRate = state.speed; persist(); updateSpeed(); if (activeAudio && !activeAudio.paused) $('#player-state').textContent = state.speed === 0.8 ? '慢速播放 · 0.8×' : '正在播放 · 1.0×'; notify(state.speed === 0.8 ? '已切换慢速跟读 · 0.8×' : '已切换正常语速 · 1.0×'); return; }
     const emptyLink = event.target.closest('.empty-state a[href="#scenes"]');
     if (emptyLink && location.hash === '#scenes') { state.query = ''; state.theme = 'all'; routePage(); }
   });
